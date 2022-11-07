@@ -1,0 +1,138 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+using UnityEngine.UI;
+
+public class GameManager : MonoBehaviour
+{
+    [SerializeField] GameObject[] stagePrefabs; //스테이지 프리팹
+    [SerializeField] GameObject player;
+    [SerializeField] Transform DownSpawn;
+    [SerializeField] Transform UpSpawn;
+
+    int curStageIndex;
+
+    GameObject curStage; //현재 스테이지 오브젝트
+
+    static GameManager m_instance;
+
+
+    public static GameManager Instance
+    {
+        get
+        {
+            if (m_instance == null)
+                m_instance = FindObjectOfType<GameManager>();
+
+            return m_instance;
+        }
+
+    }
+
+    static public GameManager instance; //공용적으로 접근 가능한 GameManager 객체
+    public bool isGameOver;
+    public int score;
+    public static int playerLife;
+
+    [SerializeField] Texture2D[] numTextures;
+    [SerializeField] Image lifeNumImage;
+    [SerializeField] Text scoreNumText;
+    [SerializeField] GameObject gameOverUI;
+
+
+    private void Awake()//게임 시작 후 Start 이전에 호출이 되는 함수
+    {
+        if (GameManager.instance == null)
+            GameManager.instance = this;
+        playerLife = 3;
+    }
+
+    // Start is called before the first frame update
+    void Start()
+    {
+        curStage = Instantiate(stagePrefabs[curStageIndex]);
+        UpdateLifeUI();
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        
+    }
+
+    public void NextStage() //NextRoom에서 호출해줄 함수
+    {
+        curStageIndex++;
+
+        if (curStageIndex < stagePrefabs.Length)
+        {
+            Destroy(curStage);
+
+            curStage = Instantiate(stagePrefabs[curStageIndex]);
+            player.transform.position = DownSpawn.position;
+
+        }
+
+    }
+    public void BeforeStage() //BeforeRoom에서 호출해줄 함수
+    {
+        curStageIndex--;
+
+        if (curStageIndex < stagePrefabs.Length)
+        {
+            Destroy(curStage);
+
+            curStage = Instantiate(stagePrefabs[curStageIndex]);
+            player.transform.position = UpSpawn.position;
+
+        }
+
+    }
+
+    public void PlayerDie() //플레이어가 죽었을때 호출될 함수
+    {
+        playerLife--;
+
+        if (playerLife < 0)
+        {
+            GameOver();
+        }
+        else
+        {
+            //플레이어 부활
+            Instantiate(player);
+
+            UpdateLifeUI();
+
+        }
+
+    }
+
+    void GameOver() //몫이 다 닳아서 게임오버가 됐을때 호출될 함수
+    {
+        isGameOver = true;
+        gameOverUI.SetActive(true);
+
+        Time.timeScale = 0f;
+
+    }
+
+    void UpdateLifeUI()
+    {
+        Sprite sprite = Sprite.Create(numTextures[playerLife], lifeNumImage.sprite.rect, lifeNumImage.sprite.pivot);
+
+        lifeNumImage.sprite = sprite;
+
+    }
+
+    public void AddScore(int score) //적이 죽을때 호출될 함수
+    {
+        this.score += score;
+
+        //UI에 표시하기
+        scoreNumText.text = this.score.ToString();
+
+    }
+
+}
